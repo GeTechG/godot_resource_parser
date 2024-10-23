@@ -83,6 +83,6 @@ config/icon="res://icon.svg"
 renderer/rendering_method="mobile"
 "#;
         let (_, godot_file) = parse_godot_file(input).unwrap();
-        println!("{:?}", godot_file.serialize_bin());
+        println!("{:?}", godot_file.serialize_json());
     }
 }

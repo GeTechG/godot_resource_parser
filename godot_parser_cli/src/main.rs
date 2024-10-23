@@ -6,7 +6,9 @@ use base64::prelude::BASE64_STANDARD;
 use clap::{Parser, Subcommand, ValueEnum, ValueHint};
 use godot_data::godot_file::GodotFile;
 use godot_data::nanoserde::{DeBin, DeJson, SerBin, SerJson};
+use godot_data::tscn_file::TSCNFile;
 use godot_parser_library::godot_parser::parse_godot_file;
+use godot_parser_library::tscn_parser::parse_tscn_file;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 enum Format {
@@ -63,6 +65,10 @@ fn main() {
                     let (_, godot_file) = parse_godot_file(&file_contents).expect("Failed to parse the Godot file");
                     Box::from(godot_file)
                 }
+                "tscn" => {
+                    let (_, tscn_file) = parse_tscn_file(&file_contents).expect("Failed to parse the Godot file");
+                    Box::from(tscn_file)
+                }
                 _ => {
                     panic!("Unsupported file extension");
                 }
@@ -83,6 +89,22 @@ fn main() {
                                 .expect("Failed to read the file");
                             let godot_file: GodotFile = GodotFile::deserialize_bin(file_contents.as_slice()).expect("Failed to deserialize the BIN file");
                             Box::from(godot_file)
+                        }
+                    }
+                }
+                "tscn" => {
+                    match format_in {
+                        Format::JSON => {
+                            let file_contents = fs::read_to_string(&cli.path)
+                                .expect("Failed to read the file");
+                            let tscn_file = TSCNFile::deserialize_json(&file_contents).expect("Failed to deserialize the JSON file");
+                            Box::from(tscn_file)
+                        }
+                        Format::BIN => {
+                            let file_contents = fs::read(&cli.path)
+                                .expect("Failed to read the file");
+                            let tscn_file = TSCNFile::deserialize_bin(file_contents.as_slice()).expect("Failed to deserialize the BIN file");
+                            Box::from(tscn_file)
                         }
                     }
                 }
