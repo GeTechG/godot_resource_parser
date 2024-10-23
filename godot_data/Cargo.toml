@@ -1,0 +1,16 @@
+[package]
+name = "godot_data"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+serjson = []
+serjsonpretty = []
+dejson = []
+serbin = []
+debin = []
+minname = []
+
+[dependencies]
+nanoserde = {version = "0.1.37", default-features = false}
+godot_macros = {path = "../godot_macros"}

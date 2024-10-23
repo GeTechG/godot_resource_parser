@@ -1,0 +1,1 @@
+{"cv":5,"s":{"application":{"run/main_scene":{"s":["res://game.tscn"]},"config/name":{"s":["test"]},"config/icon":{"s":["res://icon.svg"]},"config/features":{"psa":[["4.3","Mobile"]]}},"rendering":{"renderer/rendering_method":{"s":["mobile"]}}}}

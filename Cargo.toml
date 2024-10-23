@@ -1,0 +1,3 @@
+[workspace]
+members = [ "godot_data", "godot_macros", "godot_parser_cli","godot_parser_library"]
+resolver = "2"

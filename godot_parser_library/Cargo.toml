@@ -1,0 +1,11 @@
+[package]
+name = "godot_parser_library"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["godot_data/serbin", "godot_data/minname"]
+
+[dependencies]
+nom = "7.1.3"
+godot_data = {path = "../godot_data"}
