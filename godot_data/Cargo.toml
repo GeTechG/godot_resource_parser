@@ -12,5 +12,5 @@ debin = []
 minname = []
 
 [dependencies]
-nanoserde = {version = "0.1.37", default-features = false}
+nanoserde = {version = "0.1.37"}
 godot_macros = {path = "../godot_macros"}
