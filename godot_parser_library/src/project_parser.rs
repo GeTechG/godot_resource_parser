@@ -10,7 +10,7 @@ use nom::character::complete;
 use nom::combinator::map;
 use nom::multi::many0;
 use nom::sequence::{preceded, separated_pair};
-use godot_data::godot_file::{GodotFile, GodotFileParameters};
+use godot_data::project_file::{ProjectFile, GodotFileParameters};
 use godot_data::values::GodotValue;
 use crate::data::values::parse_godot_value;
 
@@ -42,13 +42,13 @@ fn parse_section(input: &str) -> IResult<&str, (String, GodotFileParameters)> {
     )))
 }
 
-pub fn parse_godot_file(input: &str) -> IResult<&str, GodotFile> {
+pub fn parse_project_file(input: &str) -> IResult<&str, ProjectFile> {
     let (input, _) = many0(parse_comment)(input)?;
     let (input, _) = line_ending(input)?;
     let (input, config_version) = preceded(tag("config_version="), complete::u32)(input)?;
     let (input, _) = many0(line_ending)(input)?;
     let (input, sections) = map(many0(parse_section), |section| section.into_iter().collect::<HashMap<_, _>>())(input)?;
-    Ok((input, GodotFile {
+    Ok((input, ProjectFile {
         config_version,
         sections,
     }))
@@ -82,7 +82,7 @@ config/icon="res://icon.svg"
 
 renderer/rendering_method="mobile"
 "#;
-        let (_, godot_file) = parse_godot_file(input).unwrap();
+        let (_, godot_file) = parse_project_file(input).unwrap();
         println!("{:?}", godot_file.serialize_json());
     }
 }

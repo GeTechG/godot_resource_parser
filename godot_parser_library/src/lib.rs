@@ -1,3 +1,3 @@
-pub mod godot_parser;
+pub mod project_parser;
 mod data;
 pub mod tscn_parser;
