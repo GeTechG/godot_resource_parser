@@ -7,14 +7,15 @@ use godot_macros::SerJsonEnumPretty;
 #[cfg_attr(feature = "serbin", derive(SerBin))]
 #[cfg_attr(feature = "debin", derive(DeBin))]
 pub enum GodotValue {
-    #[cfg_attr(feature = "minname", nserde(rename = "s"))]
     String(String),
-    #[cfg_attr(feature = "minname", nserde(rename = "i"))]
     Integer(i64),
-    #[cfg_attr(feature = "minname", nserde(rename = "f"))]
     Float(f64),
-    #[cfg_attr(feature = "minname", nserde(rename = "b"))]
     Boolean(bool),
-    #[cfg_attr(feature = "minname", nserde(rename = "psa"))]
     PackedStringArray(Vec<String>),
+    NodePath(String),
+    Vector2((f64, f64)),
+    Rect2((f64, f64, f64, f64)),
+    Color((f64, f64, f64, f64)),
+    ExtResourceLink(String),
+    SubResourceLink(String),
 }

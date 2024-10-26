@@ -4,7 +4,7 @@ use nom::character::complete;
 use nom::combinator::map;
 use nom::error::ParseError;
 use nom::multi::{many0, separated_list0};
-use nom::sequence::delimited;
+use nom::sequence::{delimited, separated_pair, tuple};
 use nom::IResult;
 use godot_data::values::GodotValue;
 
@@ -32,6 +32,10 @@ fn mf64(s: &str) -> IResult<&str, f64> {
     Ok((remain, parsed_number.parse().unwrap()))
 }
 
+fn mf64_1(s: &str) -> IResult<&str, f64> {
+    alt((mf64, map(complete::i64, |v: i64| v as f64)))(s)
+}
+
 fn boolean(s: &str) -> IResult<&str, bool> {
     alt((map(tag("true"), |_| true), map(tag("false"), |_| false)))(s)
 }
@@ -43,6 +47,69 @@ fn parse_packed_string_array(input: &str) -> IResult<&str, Vec<String>> {
     Ok((input, list))
 }
 
+
+fn node_path(s: &str) -> IResult<&str, String> {
+    map(
+        delimited(tag("NodePath(\""), is_not("\""), tag("\")")),
+        |s: &str| s.to_string(),
+    )(s)
+}
+
+fn vec2(s: &str) -> IResult<&str, (f64, f64)> {
+    let (remain, (x, y)) = delimited(
+        tag("Vector2("),
+        separated_pair(mf64_1, tag(", "), mf64_1),
+        tag(")"),
+    )(s)?;
+    Ok((remain, (x, y)))
+}
+
+fn rect2(s: &str) -> IResult<&str, (f64, f64, f64, f64)> {
+    let (remain, (x1, _, y1, _, x2, _, y2)) = delimited(
+        tag("Rect2("),
+        tuple((
+            mf64_1,
+            tag(", "),
+            mf64_1,
+            tag(", "),
+            mf64_1,
+            tag(", "),
+            mf64_1,
+        )),
+        tag(")"),
+    )(s)?;
+
+    Ok((remain, (x1, y1, x2, y2)))
+}
+
+fn color(s: &str) -> IResult<&str, (f64, f64, f64, f64)> {
+    let (remain, color) =
+        delimited(tag("Color("), separated_list0(tag(", "), mf64_1), tag(")"))(s)?;
+    Ok((
+        remain,
+        (
+            color.first().cloned().unwrap_or(0.0),
+            color.get(1).cloned().unwrap_or(0.0),
+            color.get(2).cloned().unwrap_or(0.0),
+            color.get(3).cloned().unwrap_or(0.0),
+        ),
+    ))
+}
+
+fn ext_resource(s: &str) -> IResult<&str, String> {
+    map(
+        delimited(tag("ExtResource(\""), is_not("\""), tag("\")")),
+        |s: &str| s.to_string(),
+    )(s)
+}
+
+fn sub_resource(s: &str) -> IResult<&str, String> {
+    map(
+        delimited(tag("SubResource(\""), is_not("\""), tag("\")")),
+        |s: &str| s.to_string(),
+    )(s)
+}
+
 pub fn parse_godot_value(input: &str) -> IResult<&str, GodotValue> {
     alt((
         map(quotes_str, |s: &str| GodotValue::String(s.to_string())),
@@ -50,5 +117,11 @@ pub fn parse_godot_value(input: &str) -> IResult<&str, GodotValue> {
         map(complete::i64, |s: i64| GodotValue::Integer(s)),
         map(boolean, |s: bool| GodotValue::Boolean(s)),
         map(parse_packed_string_array, |s| GodotValue::PackedStringArray(s)),
+        map(node_path, |s| GodotValue::NodePath(s)),
+        map(vec2, |s| GodotValue::Vector2(s)),
+        map(rect2, |s| GodotValue::Rect2(s)),
+        map(ext_resource, |s| GodotValue::ExtResourceLink(s)),
+        map(sub_resource, |s| GodotValue::SubResourceLink(s)),
+        map(color, |s| GodotValue::Color(s)),
     ))(input)
 }

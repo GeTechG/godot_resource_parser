@@ -55,19 +55,21 @@ impl<T: SerJson + SerBin> Serializable for T {}
 fn main() {
     let cli = Cli::parse();
 
-    let extension: String;
+    let extension: &str;
 
     let ser_data: Box<dyn Serializable> = match cli.command {
         Command::FromGodot => {
             let file_contents = fs::read_to_string(&cli.path)
                 .expect("Failed to read the file");
-            extension = cli.path.extension().and_then(OsStr::to_str).map(ToString::to_string).expect("Failed to get the file extension");
-            match extension.as_str() {
+            let _extension = cli.path.extension().and_then(OsStr::to_str).expect("Failed to get the file extension");
+            match _extension {
                 "godot" => {
+                    extension = "bin";
                     let (_, godot_file) = parse_project_file(&file_contents).expect("Failed to parse the Godot file");
                     Box::from(godot_file)
                 }
                 "tscn" => {
+                    extension = "scn";
                     let (_, tscn_file) = parse_tscn_file(&file_contents).expect("Failed to parse the Godot file");
                     Box::from(tscn_file)
                 }
@@ -78,9 +80,9 @@ fn main() {
 
         }
         Command::FromFormat { format_in, extension: _extension } => {
-            extension = _extension;
-            match extension.as_str() {
+            match _extension.as_str() {
                 "godot" => {
+                    extension = "bin";
                     match format_in {
                         Format::JSON => {
                             let file_contents = fs::read_to_string(&cli.path)
@@ -97,6 +99,7 @@ fn main() {
                     }
                 }
                 "tscn" => {
+                    extension = "scn";
                     match format_in {
                         Format::JSON => {
                             let file_contents = fs::read_to_string(&cli.path)
@@ -124,8 +127,7 @@ fn main() {
             if cli.stdout {
                 println!("{}", ser_data.serialize_json());
             } else {
-                let new_extension = extension + ".json";
-                let output_path = cli.output.unwrap_or(cli.path.with_extension(new_extension));
+                let output_path = cli.output.unwrap_or(cli.path.with_extension(extension));
                 fs::write(output_path, ser_data.serialize_json()).expect("Failed to write the output file");
             }
         }
@@ -134,8 +136,7 @@ fn main() {
                 let bin = ser_data.serialize_bin();
                 println!("{}", BASE64_STANDARD.encode(bin.as_slice()));
             } else {
-                let new_extension = extension + ".bin";
-                let output_path = cli.output.unwrap_or(cli.path.with_extension(new_extension));
+                let output_path = cli.output.unwrap_or(cli.path.with_extension(extension));
                 fs::write(output_path, ser_data.serialize_bin()).expect("Failed to write the output file");
             }
         }
