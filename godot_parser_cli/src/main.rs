@@ -8,7 +8,7 @@ use godot_data::project_file::ProjectFile;
 use godot_data::nanoserde::{DeBin, DeJson, SerBin, SerJson};
 use godot_data::tscn_file::TSCNFile;
 use godot_parser_library::project_parser::parse_project_file;
-use godot_parser_library::tscn_parser::parse_tscn_file;
+use godot_parser_library::tscn_tres_parser::{parse_tres_file, parse_tscn_file};
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 enum Format {
@@ -73,6 +73,11 @@ fn main() {
                     let (_, tscn_file) = parse_tscn_file(&file_contents).expect("Failed to parse the Godot file");
                     Box::from(tscn_file)
                 }
+                "tres" => {
+                    extension = "res";
+                    let (_, tscn_file) = parse_tres_file(&file_contents).expect("Failed to parse the Godot file");
+                    Box::from(tscn_file)
+                }
                 _ => {
                     panic!("Unsupported file extension");
                 }
@@ -115,6 +120,23 @@ fn main() {
                         }
                     }
                 }
+                "tres" => {
+                    extension = "res";
+                    match format_in {
+                        Format::JSON => {
+                            let file_contents = fs::read_to_string(&cli.path)
+                                .expect("Failed to read the file");
+                            let tscn_file = TSCNFile::deserialize_json(&file_contents).expect("Failed to deserialize the JSON file");
+                            Box::from(tscn_file)
+                        }
+                        Format::BIN => {
+                            let file_contents = fs::read(&cli.path)
+                                .expect("Failed to read the file");
+                            let tscn_file = TSCNFile::deserialize_bin(file_contents.as_slice()).expect("Failed to deserialize the BIN file");
+                            Box::from(tscn_file)
+                        }
+                    }
+                }
                 _ => {
                     panic!("Unsupported file extension");
                 }
@@ -128,6 +150,8 @@ fn main() {
                 println!("{}", ser_data.serialize_json());
             } else {
                 let output_path = cli.output.unwrap_or(cli.path.with_extension(extension));
+                let output_dir = output_path.parent().expect("Failed to get the parent directory");
+                fs::create_dir_all(output_dir).expect("Failed to create the output directory");
                 fs::write(output_path, ser_data.serialize_json()).expect("Failed to write the output file");
             }
         }
@@ -137,6 +161,8 @@ fn main() {
                 println!("{}", BASE64_STANDARD.encode(bin.as_slice()));
             } else {
                 let output_path = cli.output.unwrap_or(cli.path.with_extension(extension));
+                let output_dir = output_path.parent().expect("Failed to get the parent directory");
+                fs::create_dir_all(output_dir).expect("Failed to create the output directory");
                 fs::write(output_path, ser_data.serialize_bin()).expect("Failed to write the output file");
             }
         }

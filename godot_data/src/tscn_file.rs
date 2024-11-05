@@ -12,9 +12,11 @@ use crate::values::GodotValue;
 #[cfg_attr(feature = "debin", derive(DeBin))]
 pub enum TagType {
     GdScene,
+    GdResource,
     ExtResource,
     SubResource,
     Node,
+    Resource,
 }
 
 impl FromStr for TagType {
@@ -22,9 +24,11 @@ impl FromStr for TagType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "gd_scene" => Ok(TagType::GdScene),
+            "gd_resource" => Ok(TagType::GdResource),
             "ext_resource" => Ok(TagType::ExtResource),
             "sub_resource" => Ok(TagType::SubResource),
             "node" => Ok(TagType::Node),
+            "resource" => Ok(TagType::Resource),
             _ => Err(Error),
         }
     }
@@ -53,4 +57,3 @@ pub struct TSCNFile {
     pub sub_resources: HashMap<String, Tag>,
     pub nodes: Vec<Tag>,
 }
-
