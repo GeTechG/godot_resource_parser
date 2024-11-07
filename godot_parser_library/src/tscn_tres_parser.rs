@@ -89,9 +89,16 @@ pub fn parse_tscn_file(str: &str) -> IResult<&str, TSCNFile> {
     }
     let (remain, tags): (&str, Vec<Tag>) = many0(read_tag_parse)(remain)?;
     let mut nodes = Vec::new();
+    let mut connections = Vec::new();
     for tag in tags {
-        if let TagType::Node = tag._type {
-            nodes.push(tag)
+        match tag._type {
+            TagType::Node => {
+                nodes.push(tag)
+            }
+            TagType::Connection => {
+                connections.push(tag)
+            }
+            _ => {}
         }
     }
 
@@ -102,6 +109,7 @@ pub fn parse_tscn_file(str: &str) -> IResult<&str, TSCNFile> {
             ext_resources,
             sub_resources,
             nodes,
+            connections,
         },
     ))
 }
@@ -145,6 +153,7 @@ pub fn parse_tres_file(str: &str) -> IResult<&str, TSCNFile> {
             ext_resources,
             sub_resources,
             nodes,
+            connections: Vec::new(),
         },
     ))
 }

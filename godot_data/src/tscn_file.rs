@@ -17,6 +17,7 @@ pub enum TagType {
     SubResource,
     Node,
     Resource,
+    Connection,
 }
 
 impl FromStr for TagType {
@@ -29,6 +30,7 @@ impl FromStr for TagType {
             "sub_resource" => Ok(TagType::SubResource),
             "node" => Ok(TagType::Node),
             "resource" => Ok(TagType::Resource),
+            "connection" => Ok(TagType::Connection),
             _ => Err(Error),
         }
     }
@@ -56,4 +58,5 @@ pub struct TSCNFile {
     pub ext_resources: HashMap<String, Tag>,
     pub sub_resources: HashMap<String, Tag>,
     pub nodes: Vec<Tag>,
+    pub connections: Vec<Tag>,
 }
