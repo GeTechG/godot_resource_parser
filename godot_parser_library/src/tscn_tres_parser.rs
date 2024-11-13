@@ -168,6 +168,22 @@ mod tests {
         let input = r#"[gd_scene format=3 uid="uid://lrpk7b420cd7"]
 
 [node name="Game" type="Node2D"]
+
+[node name="scores" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -118.0
+offset_top = 75.0
+offset_right = 120.0
+offset_bottom = 168.0
+grow_horizontal = 2
+text = "ПРИВ"
+label_settings = SubResource("LabelSettings_4h1rj")
+autowrap_mode = 2
+justification_flags = 2
+clip_text = true
         "#;
         let (input, tscn) = parse_tscn_file(input).unwrap();
         println!("{}", tscn.serialize_json());

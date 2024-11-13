@@ -14,7 +14,7 @@ fn quotes_str(s: &str) -> IResult<&str, &str> {
         many0(alt((tag("\\\""), is_not("\\\"")))),
         tag("\""),
     )(s)?;
-    let len = parts.join("").len();
+    let len = parts.join("").chars().count();
     let (remain, out) = delimited(tag("\""), take(len), tag("\""))(s)?;
     Ok((remain, out))
 }
