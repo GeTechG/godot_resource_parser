@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-godot_data = { path = "../godot_data", features = ["serbin", "serjson", "dejson", "debin"] }
+godot_data = { path = "../godot_data", features = ["serbin", "serjson", "dejson", "debin", "serron", "deron"] }
 godot_parser_library = { path = "../godot_parser_library" }
 clap = { version = "4.5.20", features = ["derive"] }
 base64 = { version = "0.22.1" }

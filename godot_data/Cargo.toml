@@ -4,13 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-serjson = []
-serjsonpretty = []
-dejson = []
-serbin = []
-debin = []
+serjson = ["nanoserde", "nanoserde/json"]
+serjsonpretty = ["nanoserde", "nanoserde/json"]
+dejson = ["nanoserde", "nanoserde/json"]
+serbin = ["bincode"]
+debin = ["bincode"]
+serron = ["nanoserde", "nanoserde/ron"]
+deron = ["nanoserde", "nanoserde/ron"]
 minname = []
 
 [dependencies]
-nanoserde = {version = "0.1.37"}
+nanoserde = {version = "0.2.0-beta.0", optional = true, default-features = false, features = ["std"]}
+bincode = {version = "2.0.0-rc.3", optional = true }
 godot_macros = {path = "../godot_macros"}

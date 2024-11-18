@@ -1,11 +1,14 @@
+use std::any::Any;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{PathBuf};
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use clap::{Parser, Subcommand, ValueEnum, ValueHint};
+use godot_data::bincode;
+use godot_data::bincode::config;
 use godot_data::project_file::ProjectFile;
-use godot_data::nanoserde::{DeBin, DeJson, SerBin, SerJson};
+use godot_data::nanoserde::{DeJson, DeRon, SerJson, SerRon};
 use godot_data::tscn_file::TSCNFile;
 use godot_parser_library::project_parser::parse_project_file;
 use godot_parser_library::tscn_tres_parser::{parse_tres_file, parse_tscn_file};
@@ -14,6 +17,7 @@ use godot_parser_library::tscn_tres_parser::{parse_tres_file, parse_tscn_file};
 enum Format {
     JSON,
     BIN,
+    RON
 }
 
 #[derive(Parser)]
@@ -49,15 +53,13 @@ enum Command {
     }
 }
 
-trait Serializable: SerJson + SerBin {}
-impl<T: SerJson + SerBin> Serializable for T {}
-
 fn main() {
     let cli = Cli::parse();
 
     let extension: &str;
+    let config = config::standard();
 
-    let ser_data: Box<dyn Serializable> = match cli.command {
+    let ser_data: Box<dyn Any> = match cli.command {
         Command::FromGodot => {
             let file_contents = fs::read_to_string(&cli.path)
                 .expect("Failed to read the file");
@@ -98,7 +100,13 @@ fn main() {
                         Format::BIN => {
                             let file_contents = fs::read(&cli.path)
                                 .expect("Failed to read the file");
-                            let godot_file: ProjectFile = ProjectFile::deserialize_bin(file_contents.as_slice()).expect("Failed to deserialize the BIN file");
+                            let (godot_file, _): (ProjectFile, _) = bincode::decode_from_slice(file_contents.as_slice(), config).expect("Failed to deserialize the BIN file");
+                            Box::from(godot_file)
+                        }
+                        Format::RON => {
+                            let file_contents = fs::read_to_string(&cli.path)
+                                .expect("Failed to read the file");
+                            let godot_file: ProjectFile = ProjectFile::deserialize_ron(&file_contents).expect("Failed to deserialize the RON file");
                             Box::from(godot_file)
                         }
                     }
@@ -115,7 +123,13 @@ fn main() {
                         Format::BIN => {
                             let file_contents = fs::read(&cli.path)
                                 .expect("Failed to read the file");
-                            let tscn_file = TSCNFile::deserialize_bin(file_contents.as_slice()).expect("Failed to deserialize the BIN file");
+                            let (tscn_file, _): (TSCNFile, _) = bincode::decode_from_slice(file_contents.as_slice(), config).expect("Failed to deserialize the BIN file");
+                            Box::from(tscn_file)
+                        }
+                        Format::RON => {
+                            let file_contents = fs::read_to_string(&cli.path)
+                                .expect("Failed to read the file");
+                            let tscn_file = TSCNFile::deserialize_ron(&file_contents).expect("Failed to deserialize the RON file");
                             Box::from(tscn_file)
                         }
                     }
@@ -132,7 +146,13 @@ fn main() {
                         Format::BIN => {
                             let file_contents = fs::read(&cli.path)
                                 .expect("Failed to read the file");
-                            let tscn_file = TSCNFile::deserialize_bin(file_contents.as_slice()).expect("Failed to deserialize the BIN file");
+                            let (tscn_file, _): (TSCNFile, _) = bincode::decode_from_slice(file_contents.as_slice(), config).expect("Failed to deserialize the BIN file");
+                            Box::from(tscn_file)
+                        }
+                        Format::RON => {
+                            let file_contents = fs::read_to_string(&cli.path)
+                                .expect("Failed to read the file");
+                            let tscn_file = TSCNFile::deserialize_ron(&file_contents).expect("Failed to deserialize the RON file");
                             Box::from(tscn_file)
                         }
                     }
@@ -146,24 +166,54 @@ fn main() {
 
     match cli.format {
         Format::JSON => {
+            let data = if let Some(godot_file) = ser_data.downcast_ref::<ProjectFile>() {
+                godot_file.serialize_json()
+            } else if let Some(tscn_file) = ser_data.downcast_ref::<TSCNFile>() {
+                tscn_file.serialize_json()
+            } else {
+                panic!("Failed to downcast the data");
+            };
             if cli.stdout {
-                println!("{}", ser_data.serialize_json());
+                println!("{}", data);
             } else {
                 let output_path = cli.output.unwrap_or(cli.path.with_extension(extension));
                 let output_dir = output_path.parent().expect("Failed to get the parent directory");
                 fs::create_dir_all(output_dir).expect("Failed to create the output directory");
-                fs::write(output_path, ser_data.serialize_json()).expect("Failed to write the output file");
+                fs::write(output_path, data).expect("Failed to write the output file");
             }
         }
         Format::BIN => {
+            let data = if let Some(godot_file) = ser_data.downcast_ref::<ProjectFile>() {
+                bincode::encode_to_vec(&godot_file, config).expect("Failed to serialize the data")
+            } else if let Some(tscn_file) = ser_data.downcast_ref::<TSCNFile>() {
+                bincode::encode_to_vec(&tscn_file, config).expect("Failed to serialize the data")
+            } else {
+                panic!("Failed to downcast the data");
+            };
             if cli.stdout {
-                let bin = ser_data.serialize_bin();
-                println!("{}", BASE64_STANDARD.encode(bin.as_slice()));
+                println!("{}", BASE64_STANDARD.encode(data.as_slice()));
             } else {
                 let output_path = cli.output.unwrap_or(cli.path.with_extension(extension));
                 let output_dir = output_path.parent().expect("Failed to get the parent directory");
                 fs::create_dir_all(output_dir).expect("Failed to create the output directory");
-                fs::write(output_path, ser_data.serialize_bin()).expect("Failed to write the output file");
+                fs::write(output_path, data).expect("Failed to write the output file");
+            }
+        }
+        Format::RON => {
+            let data = if let Some(godot_file) = ser_data.downcast_ref::<ProjectFile>() {
+                godot_file.serialize_ron()
+            } else if let Some(tscn_file) = ser_data.downcast_ref::<TSCNFile>() {
+                tscn_file.serialize_ron()
+            } else {
+                panic!("Failed to downcast the data");
+            };
+            if cli.stdout {
+                println!("{}", data);
+            } else {
+                let output_path = cli.output.unwrap_or(cli.path.with_extension(extension));
+                let output_dir = output_path.parent().expect("Failed to get the parent directory");
+                fs::create_dir_all(output_dir).expect("Failed to create the output directory");
+                fs::write(output_path, data).expect("Failed to write the output file");
             }
         }
     }
