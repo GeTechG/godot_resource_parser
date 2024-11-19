@@ -37,4 +37,6 @@ pub enum GodotValue {
     ExtResourceLink(String),
     #[cfg_attr(feature = "minname", nserde(rename = "SRL"))]
     SubResourceLink(String),
+    #[cfg_attr(feature = "minname", nserde(rename = "A"))]
+    Array(Vec<GodotValue>),
 }

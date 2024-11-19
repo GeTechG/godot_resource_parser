@@ -82,6 +82,20 @@ fn rect2(s: &str) -> IResult<&str, (f64, f64, f64, f64)> {
     Ok((remain, (x1, y1, x2, y2)))
 }
 
+fn ext_resource(s: &str) -> IResult<&str, String> {
+    map(
+        delimited(tag("ExtResource(\""), is_not("\""), tag("\")")),
+        |s: &str| s.to_string(),
+    )(s)
+}
+
+fn sub_resource(s: &str) -> IResult<&str, String> {
+    map(
+        delimited(tag("SubResource(\""), is_not("\""), tag("\")")),
+        |s: &str| s.to_string(),
+    )(s)
+}
+
 fn color(s: &str) -> IResult<&str, (f64, f64, f64, f64)> {
     let (remain, color) =
         delimited(tag("Color("), separated_list0(tag(", "), mf64_1), tag(")"))(s)?;
@@ -96,18 +110,11 @@ fn color(s: &str) -> IResult<&str, (f64, f64, f64, f64)> {
     ))
 }
 
-fn ext_resource(s: &str) -> IResult<&str, String> {
-    map(
-        delimited(tag("ExtResource(\""), is_not("\""), tag("\")")),
-        |s: &str| s.to_string(),
-    )(s)
-}
-
-fn sub_resource(s: &str) -> IResult<&str, String> {
-    map(
-        delimited(tag("SubResource(\""), is_not("\""), tag("\")")),
-        |s: &str| s.to_string(),
-    )(s)
+fn array(s: &str) -> IResult<&str, Vec<GodotValue>> {
+    let (remain, _) = tag("[")(s)?;
+    let (remain, list) = separated_list0(tag(", "), parse_godot_value)(remain)?;
+    let (remain, _) = tag("]")(remain)?;
+    Ok((remain, list))
 }
 
 pub fn parse_godot_value(input: &str) -> IResult<&str, GodotValue> {
@@ -123,5 +130,6 @@ pub fn parse_godot_value(input: &str) -> IResult<&str, GodotValue> {
         map(ext_resource, |s| GodotValue::ExtResourceLink(s)),
         map(sub_resource, |s| GodotValue::SubResourceLink(s)),
         map(color, |s| GodotValue::Color(s)),
+        map(array, |s| GodotValue::Array(s)),
     ))(input)
 }
