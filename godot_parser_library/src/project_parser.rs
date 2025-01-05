@@ -7,7 +7,7 @@ use nom::{
 };
 use nom::bytes::complete::take_until1;
 use nom::character::complete;
-use nom::combinator::map;
+use nom::combinator::{map, not};
 use nom::multi::many0;
 use nom::sequence::{preceded, separated_pair};
 use godot_data::project_file::{ProjectFile, GodotFileParameters};
@@ -22,9 +22,9 @@ fn parse_comment(input: &str) -> IResult<&str, String> {
 }
 
 fn parse_parameter(input: &str) -> IResult<&str, (String, GodotValue)> {
-    let (input, expression) = not_line_ending(input)?;
-    let (input, _) = opt(line_ending)(input)?;
-    let (_, (name, value)) = separated_pair(take_until1("="), tag("="), parse_godot_value)(expression)?;
+    not(line_ending)(input)?;
+    let (input, (name, value)) = separated_pair(take_until1("="), tag("="), parse_godot_value)(input)?;
+    let (input, _) = line_ending(input)?;
     Ok((input, (name.trim().to_string(), value)))
 }
 
@@ -56,7 +56,7 @@ pub fn parse_project_file(input: &str) -> IResult<&str, ProjectFile> {
 
 #[cfg(test)]
 mod tests {
-    use godot_data::nanoserde::{SerBin, SerJson};
+    use godot_data::nanoserde::{SerJson};
     use super::*;
 
     #[test]
@@ -81,6 +81,13 @@ config/icon="res://icon.svg"
 [rendering]
 
 renderer/rendering_method="mobile"
+
+[internationalization]
+
+locale/langs={
+"en": "res://langs/en.json",
+"ru": "res://langs/ru.json"
+}
 "#;
         let (_, godot_file) = parse_project_file(input).unwrap();
         println!("{:?}", godot_file.serialize_json());

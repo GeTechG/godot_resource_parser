@@ -1,7 +1,8 @@
 use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag, take, take_while1};
 use nom::character::complete;
-use nom::combinator::map;
+use nom::character::complete::line_ending;
+use nom::combinator::{map, opt};
 use nom::error::ParseError;
 use nom::multi::{many0, separated_list0};
 use nom::sequence::{delimited, separated_pair, tuple};
@@ -117,6 +118,13 @@ fn array(s: &str) -> IResult<&str, Vec<GodotValue>> {
     Ok((remain, list))
 }
 
+fn dictionary(s: &str) -> IResult<&str, Vec<(String, GodotValue)>> {
+    let (remain, _) = tag("{\n")(s)?;
+    let (remain, list) = separated_list0(tag(",\n"), separated_pair(map(quotes_str, |s: &str| s.to_string()), tag(": "), parse_godot_value))(remain)?;
+    let (remain, _) = tag("\n}")(remain)?;
+    Ok((remain, list))
+}
+
 pub fn parse_godot_value(input: &str) -> IResult<&str, GodotValue> {
     alt((
         map(quotes_str, |s: &str| GodotValue::String(s.to_string())),
@@ -131,5 +139,6 @@ pub fn parse_godot_value(input: &str) -> IResult<&str, GodotValue> {
         map(sub_resource, |s| GodotValue::SubResourceLink(s)),
         map(color, |s| GodotValue::Color(s)),
         map(array, |s| GodotValue::Array(s)),
+        map(dictionary, |s| GodotValue::Dictionary(s)),
     ))(input)
 }

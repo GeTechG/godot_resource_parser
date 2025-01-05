@@ -39,4 +39,6 @@ pub enum GodotValue {
     SubResourceLink(String),
     #[cfg_attr(feature = "minname", nserde(rename = "A"))]
     Array(Vec<GodotValue>),
+    #[cfg_attr(feature = "minname", nserde(rename = "D"))]
+    Dictionary(Vec<(String, GodotValue)>),
 }
