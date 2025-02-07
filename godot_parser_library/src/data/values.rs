@@ -127,6 +127,7 @@ fn dictionary(s: &str) -> IResult<&str, Vec<(String, GodotValue)>> {
 
 pub fn parse_godot_value(input: &str) -> IResult<&str, GodotValue> {
     alt((
+        map(tag("null"), |_| GodotValue::Null),
         map(quotes_str, |s: &str| GodotValue::String(s.to_string())),
         map(mf64, |s: f64| GodotValue::Float(s)),
         map(complete::i64, |s: i64| GodotValue::Integer(s)),

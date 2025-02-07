@@ -15,6 +15,7 @@ use nanoserde::{SerRon, DeRon};
 #[cfg_attr(feature = "serron", derive(SerRon))]
 #[cfg_attr(feature = "deron", derive(DeRon))]
 pub enum GodotValue {
+    Null,
     #[cfg_attr(feature = "minname", nserde(rename = "S"))]
     String(String),
     #[cfg_attr(feature = "minname", nserde(rename = "I"))]
