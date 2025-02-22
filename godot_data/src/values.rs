@@ -18,6 +18,8 @@ pub enum GodotValue {
     Null,
     #[cfg_attr(feature = "minname", nserde(rename = "S"))]
     String(String),
+    #[cfg_attr(feature = "minname", nserde(rename = "SN"))]
+    StringName(String),
     #[cfg_attr(feature = "minname", nserde(rename = "I"))]
     Integer(i64),
     #[cfg_attr(feature = "minname", nserde(rename = "F"))]

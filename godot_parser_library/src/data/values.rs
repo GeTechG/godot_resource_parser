@@ -20,6 +20,12 @@ fn quotes_str(s: &str) -> IResult<&str, &str> {
     Ok((remain, out))
 }
 
+fn string_name(s: &str) -> IResult<&str, &str> {
+    let (input, _) = tag("&")(s)?;
+    let (input, name) = quotes_str(input)?;
+    Ok((input, name))
+}
+
 fn mf64(s: &str) -> IResult<&str, f64> {
     let (remain, parsed_number) =
         take_while1(|c: char| c.is_ascii_digit() || c == '.' || c == '-')(s)?;
@@ -128,6 +134,7 @@ fn dictionary(s: &str) -> IResult<&str, Vec<(String, GodotValue)>> {
 pub fn parse_godot_value(input: &str) -> IResult<&str, GodotValue> {
     alt((
         map(tag("null"), |_| GodotValue::Null),
+        map(string_name, |s: &str| GodotValue::StringName(s.to_string())),
         map(quotes_str, |s: &str| GodotValue::String(s.to_string())),
         map(mf64, |s: f64| GodotValue::Float(s)),
         map(complete::i64, |s: i64| GodotValue::Integer(s)),
